@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+    <meta charset="UTF-8">
+    <title>PQ Chat</title>
+    <script type='text/javascript' src='/eel.js'></script>
+    <script>
+        window.$ = window.jQuery = require("jquery");
+    </script>
+</head>
+
+<link rel="stylesheet" type="text/css" href="../semantic/semantic.min.css">
+<script src="../js/jquery.min.js"></script>
+<script src="../semantic/semantic.min.js"></script>
+<link rel="stylesheet" href="../css/style.css">
+
+<body>
+<div class="wrapper">
+    <div class="chat-overview item ui middle aligned selection divided list">
+        <div class="chat-overview-search ui left icon fluid input">
+            <i class="search icon"></i>
+            <input type="text" placeholder="Suchen">
+        </div>
+        <div class="item" id = "456" onclick="setChatActive(this)">
+            <img class="ui avatar image" src="https://semantic-ui.com/images/avatar/small/matt.jpg">
+            <div class="content">
+                <div class="header">Helen</div>
+                <div class="description">Last seen watching </div>
+            </div>
+            <div class="right floated content">
+                <div class="description">Gestern</div>
+            </div>
+        </div>
+        <div class="item active" id="789" onclick="setChatActive(this)">
+            <img class="ui avatar image" src="https://semantic-ui.com/images/avatar/small/steve.jpg">
+            <div class="content">
+                <div class="header">Christian</div>
+                <div class="description">Last seen watching </div>
+            </div>
+            <div class="right floated content">
+                <div class="description">Gestern</div>
+            </div>
+        </div>
+        <div class="item" onclick="setChatActive(this)">
+            <img class="ui avatar image" src="https://semantic-ui.com/images/avatar/large/stevie.jpg">
+            <div class="content">
+                <div class="header">Daniel</div>
+                <div class="description">Last seen watching </div>
+            </div>
+            <div class="right floated content">
+                <div class="description">Gestern</div>
+            </div>
+        </div>
+    </div>
+    <div class="full-chat">
+        <div class="imessage" id="123-456">
+            <p class="from-me no-tail margin-b_none">Previously...</p>
+            <p class="from-me no-tail">Brock went to the hospital to check on Cyntheeah...</p>
+            <p class="from-me no-tail">Notice the pretentious spelling of &ldquo;Cyntheeah&rdquo;...</p>
+            <p class="from-me no-tail">While in her hospital room, Diego is standing outside looking through the door window and can hear the entire conversation because he has super hearing.</p>
+            <p class="from-them margin-b_none">Elsewhere, Biff has plans to take down the entire Caspian family with his secret about how Roger Caspian used to be...REGINA Caspian!</p>
+            <p class="from-them margin-b_one margin-t_one">Haha</p>
+            <p class="from-me no-tail">And the budding romance between teens Erika and Johnny bloom</p>
+            <p class="from-me">Back at the hospital, cuz who doesn&rsquo;t hang out at hospitals in their free time, amirite...</p>
+            <p class="from-them margin-b_one margin-t_one">Riiiiight</p>
+            <p class="from-me no-tail margin-b_none">Brock leaves Cyntheeah&rsquo;s room, and Diego sneaks in while she sleeps...</p>
+            <p class="from-me no-tail">It&rsquo;s the worst hospital in the world cuz they leave her chart out for anyone to see...</p>
+            <p class="from-me no-tail">While the nurse isn&rsquo;t watching Diego looks at her chart...</p>
+            <p class="from-me no-tail">And discovers...</p>
+            <p class="from-me no-tail">It&rsquo;s the worst hospital in the world cuz they leave her chart out for anyone to see...</p>
+            <p class="from-me no-tail">While the nurse isn&rsquo;t watching Diego looks at her chart...</p>
+            <p class="from-me no-tail">And discovers...</p>
+            <p class="from-me no-tail">It&rsquo;s the worst hospital in the world cuz they leave her chart out for anyone to see...</p>
+            <p class="from-me no-tail">While the nurse isn&rsquo;t watching Diego looks at her chart...</p>
+            <p class="from-me no-tail">And discovers...</p>
+            <p class="from-me no-tail">It&rsquo;s the worst hospital in the world cuz they leave her chart out for anyone to see...</p>
+            <p class="from-me no-tail">While the nurse isn&rsquo;t watching Diego looks at her chart...</p>
+            <p class="from-me no-tail">And discovers...</p>
+        </div>
+        <div class="imessage active" id="123-789">
+            <p class="from-them no-tail margin-b_none">Previously...</p>
+            <p class="from-them no-tail">Brock went to the hospital to check on Cyntheeah...</p>
+            <p class="from-them no-tail">Notice the pretentious spelling of &ldquo;Cyntheeah&rdquo;...</p>
+            <p class="from-them no-tail">While in her hospital room, Diego is standing outside looking through the door window and can hear the entire conversation because he has super hearing.</p>
+            <p class="from-me margin-b_none">Elsewhere, Biff has plans to take down the entire Caspian family with his secret about how Roger Caspian used to be...REGINA Caspian!</p>
+        </div>
+        <div class="message-input ui left icon fluid input">
+            <input class="chat-input" type="text" placeholder="Schreibe eine Nachricht">
+        </div>
+    </div>
+</div>
+
+
+
+<script  src="../chat.js"></script>
+</body>
+</html>

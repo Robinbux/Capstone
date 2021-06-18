@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+    <meta charset="UTF-8">
+    <title>PQ Chat</title>
+    <script type='text/javascript' src='/eel.js'></script>
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Lato&display=swap" rel="stylesheet">
+</head>
+
+<link rel="stylesheet" type="text/css" href="semantic/semantic.min.css">
+<script src="js/jquery.min.js"></script>
+<script src="semantic/semantic.min.js"></script>
+<link rel="stylesheet" href="css/style.css">
+
+<body>
+<div class="wrapper">
+    <div class="chat-overview item ui middle aligned selection divided large list" id="chat-overview">
+        <div class="ui message">
+            <div class="header">
+                Name
+            </div>
+            <p id="name-text">Waiting</p>
+            <div class="header">
+                Personal UUID
+            </div>
+            <div id="personal-uuid">
+                <p id="uuid-text">Waiting</p>
+                <i class="copy icon" id="copy-icon" onclick="copyToClipboard('#uuid-text')"></i>
+            </div>
+        </div>
+        <div class="chat-overview-header">
+            <div>Chats</div>
+            <button class="ui basic button">
+                <i class="icon user"></i>
+                Add Contact
+            </button>
+        </div>
+        <div class="ui modal tiny">
+            <i class="close icon"></i>
+            <div class="header">
+                Add a contact
+            </div>
+            <div class="content">
+                <div class="ui success hidden message" id="add-contact-success">
+                    <i class="close icon"></i>
+                    <div class="header">
+                        User Added!
+                    </div>
+                </div>
+                <div class="ui negative hidden message" id="add-contact-failure">
+                    <i class="close icon"></i>
+                    <div class="header">
+                        User not found!
+                    </div>
+                </div>
+                <div class="ui action fluid input">
+                    <input id="add-contact-uuid" type="text" placeholder="Contact UUID">
+                    <button class="ui button add-contact">Add</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="full-chat" id="full-chat">
+        <div class="message-input ui left icon fluid input">
+            <input class="chat-input" type="text" placeholder="Schreibe eine Nachricht">
+        </div>
+    </div>
+</div>
+
+
+
+<script  src="chat.js"></script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+{
+  "name": "PQ-Chat",
+  "version": "1.0.0",
+  "description": "PQ Chat",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "keywords": [
+    "Electron"
+  ],
+  "author": "GitHub",
+  "license": "CC0-1.0",
+  "devDependencies": {
+    "electron": "^7.2.4",
+    "jquery": "^3.6.0"
+  }
+}
