@@ -252,7 +252,7 @@ class OQSClient():
             request_type = RequestType[request_type_str]
             print(type(request_type))
 
-            elif request_type == RequestType.SEND_MESSAGE_REQUEST:
+            if request_type == RequestType.SEND_MESSAGE_REQUEST:
                 self._handle_incoming_message(request_json)
 
             elif request_type == RequestType.ASSIGN_UUID_AND_SEED:
