@@ -39,12 +39,9 @@ def send_message(uuid: str, message: str):
 oqs_client = OQSClient(name=sys.argv[1], eel=eel)
 oqs_client.connect()
 
-print("EEL START")
 eel.start(
     'index.html',
     mode='chrome',
     size=(1200, 800),
     port=0
 )
-
-print("AFTER EEL START")

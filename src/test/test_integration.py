@@ -3,6 +3,9 @@ import uuid
 import oqs
 import eel
 from threading import Thread
+import os
+import sqlite3
+import time
 
 from util.security_util import generate_random_seed_phrase
 from client.oqs_client import OQSClient, Contact
@@ -58,25 +61,106 @@ CONTACT_TWO = Contact(
     shared_secret=CONTACT_SHARED_SECRET_TWO
 )
 
+server = OQSServer()
+server_thread = None
+def start_server():
+    server.start()
+
+
+def start_server_thread():
+    server_thread = Thread(target=start_server)
+    server_thread.start()
+
+def stop_server_thread():
+    print("STOP")
+    server.stop_server()
+
 class TestIntegration(TestCase):
 
-    def start_server(self):
-        self.server = OQSServer()
-        self.server.start()
+    @classmethod
+    def setUpClass(cls):
+        print("Set up class")
+        start_server_thread()
 
-    def start_server_thread(self):
-        self.server_thread = Thread(target=self.start_server)
-        self.server_thread.start()
+    @classmethod
+    def tearDownClass(cls):
+        print("TEAR DOWN CLASS")
 
-    def close_server(self):
-        self.server.close()
+    def tearDown(self):
+        self.tearDownDB()
+
+    def tearDownDB(self):
+        # "Clear" DB by removing the file
+        print("TEAR DOWN")
+        os.remove(DB_FILE_NAME)
 
     # Tests
     def test_login(self):
-        self.start_server_thread()
         oqs_client = OQSClient(name=NAME_ONE, eel=eel, test=True)
         oqs_client.connect()
-        self.assertTrue(True)
+        time.sleep(1)
+        print("AFTER SLEEP")
+        self.assertFalse(oqs_client._client_has_acccount)
+        # Now log in
+        oqs_client_new = OQSClient(name=NAME_ONE, eel=eel, test=True)
+        oqs_client_new.connect()
+        time.sleep(1)
+        self.assertTrue(oqs_client_new._client_has_acccount)
+
+    def test_connect_with_contact(self):
+        oqs_client_one = OQSClient(name=NAME_ONE, eel=eel, test=True)
+        oqs_client_one.connect()
+        time.sleep(1)
+        oqs_client_two = OQSClient(name=NAME_ONE, eel=eel, test=True)
+        oqs_client_two.connect()
+        time.sleep(1)
+        client_two_uuid = oqs_client_two.get_uuid()
+
+        oqs_client_one.contact_connection_request(contact_uuid = client_two_uuid)
+        time.sleep(1)
+        self.assertEqual(oqs_client_one._contacts[0].contact_uuid, client_two_uuid)
+
+
+    def test_send_message_between_clients(self):
+        oqs_client_one = OQSClient(name=CONTACT_NAME_ONE, eel=eel, test=True)
+        oqs_client_one.connect()
+        time.sleep(5)
+
+        oqs_client_two = OQSClient(name=CONTACT_NAME_TWO, eel=eel, test=True, other_db_path = "test/pq-chat-client-two.db")
+        oqs_client_two.connect()
+        time.sleep(5)
+
+        client_two_uuid = oqs_client_two.get_uuid()
+
+        oqs_client_one.contact_connection_request(contact_uuid=client_two_uuid)
+        time.sleep(5)
+
+        test_message_one = "New message from client one!"
+
+        # Send from client one
+        oqs_client_one.send_msg(contact_uuid=client_two_uuid, msg=test_message_one)
+        time.sleep(5)
+
+        # Verify that client two received
+        chat_history_two = oqs_client_two.load_chat_history_list()
+
+        self.assertEqual(len(chat_history_two), 1)
+        self.assertEqual(chat_history_two[0]['message'], test_message_one)
+
+        # Send message back
+        test_message_two = "Reply from client two!"
+        client_one_uuid = oqs_client_one.get_uuid()
+        time.sleep(5)
+        oqs_client_two.send_msg(contact_uuid=client_one_uuid, msg=test_message_two)
+        time.sleep(5)
+
+        # Verify that client one received
+        chat_history_one = oqs_client_one.load_chat_history_list()
+        self.assertEqual(len(chat_history_one), 1)
+        self.assertEqual(chat_history_one[0]['message'], test_message_two)
+
+
+
 
 
 

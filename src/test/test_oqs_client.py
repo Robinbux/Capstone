@@ -63,181 +63,126 @@ CONTACT_TWO = Contact(
 )
 
 class TestOQSClient(TestCase):
-    pass
     # --------------------------------------------
     # PREPARATION FUNCTIONS AND VARIABLES
     # --------------------------------------------
 
-    # def setUp(self):
-    #     self.setUpDB()
-    #
-    # def setUpDB(self):
-    #     self.connection = sqlite3.connect(DB_FILE_NAME, check_same_thread=False)
-    #     self.connection.row_factory = sqlite3.Row
-    #     self.cursor = self.connection.cursor()
-    #     setup_file = open(CLIENT_DB_SETUP_PATH)
-    #     setup_file_str = setup_file.read()
-    #     self.cursor.executescript(setup_file_str)
-    #     self.connection.commit()
-    #
-    # def setUpStandardVariables(self):
-    #     pass
-    #     # self.__pub_key = oqs_client.generate_keypair()
-    #     # self.__private_key = oqs_client.export_secret_key()
-    #     #
-    #     # self.uuid_one = str(uuid.uuid4())
-    #     # self.name_one = "John Doe"
-    #     # self.public_key_one = oqs_client.generate_keypair()
-    #     # self.private_key_one = oqs_client.export_secret_key()
-    #     # self.seed_phrase, self.seed_hash = generate_random_seed_phrase()
-    #
-    # def tearDown(self):
-    #     self.tearDownDB()
-    #
-    # def tearDownDB(self):
-    #     # "Clear" DB by removing the file
-    #     print("TEAR DOWN")
-    #     os.remove(DB_FILE_NAME)
-    #
-    # def create_personal_account(
-    #         self,
-    #         uuid: str = str(UUID_ONE),
-    #         name: str = NAME_ONE,
-    #         private_key: bytes = PRIVATE_KEY_ONE,
-    #         public_key: bytes = PUBLIC_KEY_ONE,
-    #         seed_hash: bytes = SEED_HASH_ONE):
-    #     self.cursor.execute("""
-    #                 INSERT INTO personal_information
-    #                 VALUES (
-    #                     :uuid,
-    #                     :name,
-    #                     :privateKey,
-    #                     :publicKey,
-    #                     :seedHash
-    #                 )
-    #             """, {
-    #         "uuid": uuid,
-    #         "name": name,
-    #         "privateKey": private_key,
-    #         "publicKey": public_key,
-    #         "seedHash": seed_hash
-    #     })
-    #     self.connection.commit()
-    #
-    # def add_contact(self, contact: Contact):
-    #     self.cursor.execute("""
-    #                     INSERT INTO contacts
-    #                     VALUES (
-    #                         :uuid,
-    #                         :name,
-    #                         :publicKey,
-    #                         :sharedSecret,
-    #                         :sharedCiphertext
-    #                     )
-    #                 """, {
-    #         "uuid": contact.contact_uuid,
-    #         "name": contact.contact_name,
-    #         "publicKey": contact.contact_pub_key,
-    #         "sharedSecret": contact.shared_secret,
-    #         "sharedCiphertext": contact.shared_ciphertext
-    #     })
-    #     self.connection.commit()
-    #
-    # def start_server(self):
-    #     self.server = OQSServer()
-    #     self.server.start()
-    #
-    # def start_server_thread(self):
-    #     self.server_thread = Thread(target=self.start_server)
-    #     self.server_thread.start()
-    #
-    # def close_server(self):
-    #     self.server.close()
-    #
-    # # --------------------------------------------
-    # # _check_if_client_has_account
-    # # --------------------------------------------
-    # def test_check_if_client_has_account_true(self):
-    #     global NAME_ONE
-    #
-    #     self.create_personal_account()
-    #     oqs_client = OQSClient(name=NAME_ONE, eel=eel, test=True)
-    #     self.assertTrue(oqs_client._check_if_client_has_account)
-    #
-    # def test_check_if_client_has_account_false(self):
-    #     print("START TEST 2")
-    #     global NAME_ONE
-    #
-    #     oqs_client = OQSClient(name=NAME_ONE, eel=eel, test=True)
-    #     self.assertFalse(oqs_client._check_if_client_has_account())
-    #
-    # # --------------------------------------------
-    # # _load_contacts
-    # # --------------------------------------------
-    # def test_load_contacts_equals(self):
-    #     global CONTACT_ONE
-    #     global CONTACT_TWO
-    #
-    #     oqs_client = OQSClient(name=NAME_ONE, eel=eel, test=True)
-    #     self.add_contact(CONTACT_ONE)
-    #     self.add_contact(CONTACT_TWO)
-    #
-    #     oqs_client._load_contacts()
-    #
-    #     self.assertEqual(oqs_client._contacts[0], CONTACT_ONE)
-    #     self.assertEqual(oqs_client._contacts[1], CONTACT_TWO)
-    #
-    # def test_load_contacts_not_equals(self):
-    #     global CONTACT_TWO
-    #
-    #     oqs_client = OQSClient(name=NAME_ONE, eel=eel, test=True)
-    #     self.add_contact(CONTACT_ONE)
-    #
-    #     oqs_client._load_contacts()
-    #
-    #     self.assertNotEquals(oqs_client._contacts[0], CONTACT_TWO)
+    def setUp(self):
+        self.setUpDB()
+
+    def setUpDB(self):
+        self.connection = sqlite3.connect(DB_FILE_NAME, check_same_thread=False)
+        self.connection.row_factory = sqlite3.Row
+        self.cursor = self.connection.cursor()
+        setup_file = open(CLIENT_DB_SETUP_PATH)
+        setup_file_str = setup_file.read()
+        self.cursor.executescript(setup_file_str)
+        self.connection.commit()
+
+    def tearDown(self):
+        self.tearDownDB()
+
+    def tearDownDB(self):
+        # "Clear" DB by removing the file
+        print("TEAR DOWN")
+        os.remove(DB_FILE_NAME)
+
+    def create_personal_account(
+            self,
+            uuid: str = str(UUID_ONE),
+            name: str = NAME_ONE,
+            private_key: bytes = PRIVATE_KEY_ONE,
+            public_key: bytes = PUBLIC_KEY_ONE,
+            seed_hash: bytes = SEED_HASH_ONE):
+        self.cursor.execute("""
+                    INSERT INTO personal_information
+                    VALUES (
+                        :uuid,
+                        :name,
+                        :privateKey,
+                        :publicKey,
+                        :seedHash
+                    )
+                """, {
+            "uuid": uuid,
+            "name": name,
+            "privateKey": private_key,
+            "publicKey": public_key,
+            "seedHash": seed_hash
+        })
+        self.connection.commit()
+
+    def add_contact(self, contact: Contact):
+        self.cursor.execute("""
+                        INSERT INTO contacts
+                        VALUES (
+                            :uuid,
+                            :name,
+                            :publicKey,
+                            :sharedSecret,
+                            :sharedCiphertext
+                        )
+                    """, {
+            "uuid": contact.contact_uuid,
+            "name": contact.contact_name,
+            "publicKey": contact.contact_pub_key,
+            "sharedSecret": contact.shared_secret,
+            "sharedCiphertext": contact.shared_ciphertext
+        })
+        self.connection.commit()
+
+    def start_server(self):
+        self.server = OQSServer()
+        self.server.start()
+
+    def start_server_thread(self):
+        self.server_thread = Thread(target=self.start_server)
+        self.server_thread.start()
+
+    def close_server(self):
+        self.server.close()
 
     # --------------------------------------------
-    # _handle_incoming_message
+    # _check_if_client_has_account
     # --------------------------------------------
-    # def test_handle_incoming_message_new_contact(self):
-    #     request = {
-    #         "senderUUID": str(CONTACT_UUID_ONE),
-    #         "ciphertext": base64.b64encode(CONTACT_CIPHERTEXT_ONE).decode('ascii'),
-    #         "senderName": CONTACT_NAME_ONE,
-    #         "senderPublicKey": base64.b64encode(CONTACT_PUBLIC_KEY_ONE).decode('ascii'),
-    #     }
-    #
-    #     oqs_client = OQSClient(name=NAME_ONE, eel=eel, test=True)
-    #     oqs_client._handle_incoming_message(request)
-    #
-    #     # Check that contact is added nad generated key alligns
-    #     self.assertEqual(oqs_client._contacts[0], CONTACT_ONE)
+    def test_check_if_client_has_account_true(self):
+        global NAME_ONE
 
+        self.create_personal_account()
+        oqs_client = OQSClient(name=NAME_ONE, eel=eel, test=True)
+        self.assertTrue(oqs_client._check_if_client_has_account)
+
+    def test_check_if_client_has_account_false(self):
+        print("START TEST 2")
+        global NAME_ONE
+
+        oqs_client = OQSClient(name=NAME_ONE, eel=eel, test=True)
+        self.assertFalse(oqs_client._check_if_client_has_account())
 
     # --------------------------------------------
-    # connect
+    # _load_contacts
     # --------------------------------------------
-    # def test_connect_no_server(self):
-    #     print("START TEST 5")
-    #     oqs_client = OQSClient(name=NAME_ONE, eel=eel, test=True)
-    #     with self.assertRaises(ConnectionRefusedError):
-    #         oqs_client.connect()
-    #
-    # def test_connect_new_account(self):
-    #     print("START TEST 6")
-    #     self.start_server_thread()
-    #
-    #     oqs_client = OQSClient(name=NAME_ONE, eel=eel, test=True)
-    #     request_json = oqs_client.connect()
-    #     print("**********************")
-    #     print("**********************")
-    #     print(request_json)
-    #     print("**********************")
-    #     print("**********************")
-    #
-    #     #self.close_server()
-    #
-    # #def test_connect_old_account(self):
+    def test_load_contacts_equals(self):
+        global CONTACT_ONE
+        global CONTACT_TWO
+
+        oqs_client = OQSClient(name=NAME_ONE, eel=eel, test=True)
+        self.add_contact(CONTACT_ONE)
+        self.add_contact(CONTACT_TWO)
+
+        oqs_client._load_contacts()
+
+        self.assertEqual(oqs_client._contacts[0], CONTACT_ONE)
+        self.assertEqual(oqs_client._contacts[1], CONTACT_TWO)
+
+    def test_load_contacts_not_equals(self):
+        global CONTACT_TWO
+
+        oqs_client = OQSClient(name=NAME_ONE, eel=eel, test=True)
+        self.add_contact(CONTACT_ONE)
+
+        oqs_client._load_contacts()
+
+        self.assertNotEquals(oqs_client._contacts[0], CONTACT_TWO)
 
 

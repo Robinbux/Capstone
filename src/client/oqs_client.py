@@ -9,6 +9,7 @@ import base64
 import sqlite3
 import json
 import time
+import os
 
 logging.basicConfig(
     format="[%(asctime)s] %(levelname)s: %(message)s",
@@ -32,17 +33,22 @@ DB_PATH = "client/pq-chat-client.db"
 TEST_DB_PATH = "test/pq-chat-client.db"
 
 class OQSClient():
+    """OQS client class. Use in combination with the OQSServer and at least one other client,
+    to establish a communication.
+    """
 
-    def __init__(self, eel, name: str, port: int = 33000, hostname='localhost', bufsize: int = 50000, test=False):
+    def __init__(self, eel, name: str, port: int = 33000, hostname='localhost', bufsize: int = 50000, test=False, other_db_path = None):
         self._eel = eel
         self._logger = logging.getLogger(__name__)
         self._logger.setLevel(logging.DEBUG)
         self._name = name
         self._receive_thread = Thread(target=self._receive_msg)
+        self._other_db_path = other_db_path
 
         _context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
         _context.verify_mode = ssl.CERT_REQUIRED
-        _context.load_verify_locations('../pqca/ca/falcon512_CA.crt')
+        dirname = os.path.dirname(__file__)
+        _context.load_verify_locations(os.path.join(dirname, '../pqca/ca/falcon512_CA.crt'))
 
         _socket_temp = socket(AF_INET, SOCK_STREAM, 0)
         self._socket = _context.wrap_socket(_socket_temp, server_hostname=hostname, server_side=False)
@@ -57,12 +63,15 @@ class OQSClient():
         # DB Preparation
         self._setup_db()
         self._load_contacts()
-        self.__client_has_acccount = self._check_if_client_has_account()
+        self._client_has_acccount = self._check_if_client_has_account()
 
     def _setup_db(self):
+        """Ran at every initialization. Sets up SQLLite DB with the `setup-client.sql` file
+        """
         self._logger.info("Setting up Database...")
         db_path = DB_PATH if not self._test else TEST_DB_PATH
-        print(f"PATH: {db_path}")
+        if self._other_db_path is not None:
+            db_path= self._other_db_path
         self._connection = sqlite3.connect(DB_PATH if not self._test else TEST_DB_PATH, check_same_thread=False)
         self._connection.row_factory = sqlite3.Row
         self._cursor = self._connection.cursor()
@@ -73,10 +82,19 @@ class OQSClient():
         self._connection.commit()
 
     def _check_if_client_has_account(self) -> bool:
+        """Checks if client is new, or already logged in
+
+        Returns
+        -------
+        bool
+            True if it is not the first time for the client, logging in.
+        """
         rows = self._cursor.execute("SELECT * FROM personal_information").fetchall()
         return len(rows) >= 1
 
     def _load_contacts(self):
+        """Load contacts from the database in the cache, for quicker access
+        """
         contacts = self._cursor.execute("SELECT * FROM contacts").fetchall()
         for db_contact in contacts:
             contact = Contact(
@@ -89,6 +107,10 @@ class OQSClient():
             self._contacts.append(contact)
 
     def connect(self):
+        """Connect with OQSServer. If the client is new, a NEW_ACCOUNT_REQUEST
+        is sent to retrieve a UUID and Seed Phrase from the server.
+        Otherwise a LOGIN_REQUEST is sent.
+        """
         try:
             self._socket.connect(self._address)
         except ConnectionRefusedError:
@@ -98,7 +120,7 @@ class OQSClient():
         self._logger.info(f"Connected with host {self._host} on port {self._port}")
 
         # If client is new, the server needs to generate a UUID
-        if not self.__client_has_acccount:
+        if not self._client_has_acccount:
             self._logger.info(f"No Account found!")
             self.__pub_key = client.generate_keypair()
             self.__private_key = client.export_secret_key()
@@ -123,18 +145,40 @@ class OQSClient():
         self._receive_thread.start()
         return json_data
 
-    def _xor_msg_with_shared_secret(self, msg, secret):
+    def _xor_msg_with_shared_secret(self, msg: bytes, secret: bytes) -> bytes:
+        """Used for the encryption of messages with the shared secret
+
+        Parameters
+        ----------
+        msg : bytes
+            String message as byte
+        secret : bytes
+            Shared secret with second client
+
+        Returns
+        -------
+        bytes
+            Encrypted message
+        """
         return bytes([_a ^ _b for _a, _b in zip(msg, secret)])
 
     def _handle_incoming_message(self, request_json):
+        """Called when a message from a different client is received.
+        If the sender is unknown, a new contact is created and the shared key extracted from the ciphertext.
+        
+        Parameters
+        ----------
+            request_json : dict
+                JSON containing all important parameters
+        """
         # Check if client is known or new
-        print(f"REQUEST JSON : {request_json}")
+        self._logger.info(f"REQUEST JSON : {request_json}")
         sender_uuid = request_json['senderUUID']
         sender = next((contact for contact in self._contacts if str(contact.contact_uuid) == sender_uuid), None)
         if sender is None:
-            print("NEW CONTACT")
-            print("Generating Shared secret...")
-            print(f"REQUEST JSON: {request_json}")
+            self._logger.info("NEW CONTACT")
+            self._logger.info("Generating Shared secret...")
+            self._logger.info(f"REQUEST JSON: {request_json}")
             shared_secret = client.decap_secret(base64.b64decode(request_json['ciphertext']))
             sender = Contact(
                 contact_name=request_json['senderName'],
@@ -161,7 +205,8 @@ class OQSClient():
                 "sharedCiphertext": base64.b64decode(request_json['ciphertext'])
             })
             self._connection.commit()
-
+        else:
+            self._logger.info("NO NEW CONTACT")
         base64_decoded_msg = base64.b64decode(request_json['message'])
         decrypted_msg = self._xor_msg_with_shared_secret(base64_decoded_msg, secret=sender.shared_secret)
         msg = decrypted_msg.decode()
@@ -187,9 +232,13 @@ class OQSClient():
         })
         self._connection.commit()
 
-        self._eel.handleIncomingMessage(json.dumps(payload))
+        if not self._test:
+            self._eel.handleIncomingMessage(json.dumps(payload))
 
     def _handle_connect_with_contact_response(self, request_json):
+        """Called after a connect with contact response is executed. 
+        If the contact exists, it is added and a shared secret created.
+        """
         if request_json['contactExists']:
             contact_pub_key: bytes = base64.b64decode(request_json['contactPublicKey'])
             ciphertext, shared_secret = client.encap_secret(contact_pub_key)
@@ -219,9 +268,12 @@ class OQSClient():
                 "sharedCiphertext": ciphertext
             })
             self._connection.commit()
-        self._eel.handleAddContactResponse(json.dumps(request_json))
+        if not self._test:
+            self._eel.handleAddContactResponse(json.dumps(request_json))
 
     def _save_personal_information(self, request_json):
+        """Save personal information after first login
+        """
         self._logger.info(f"Saving personal data with UUID: {request_json['UUID']}")
         self._cursor.execute("""
             INSERT INTO personal_information 
@@ -244,41 +296,52 @@ class OQSClient():
         self.__uuid = request_json['UUID']
 
     def _receive_msg(self):
+        """Permanent loop, that listens for messages from the server
+        """
         while True:
             msg = self._socket.recv(self._bufsize)
 
             request_json = json.loads(msg.decode())
             request_type_str = request_json["requestType"]
             request_type = RequestType[request_type_str]
-            print(type(request_type))
 
             if request_type == RequestType.SEND_MESSAGE_REQUEST:
                 self._handle_incoming_message(request_json)
 
             elif request_type == RequestType.ASSIGN_UUID_AND_SEED:
-                print("*************************")
-                print("ASSIGN UUID AND SEED")
+                self._logger.info("ASSIGN UUID AND SEED")
                 self._save_personal_information(request_json)
 
             elif request_type == RequestType.CONNECT_WITH_CONTACT_RESPONSE:
-                print("*************************")
-                print("RECEIVED CONNECT WITH CONTACT")
+                self._logger.info("RECEIVED CONNECT WITH CONTACT")
                 self._handle_connect_with_contact_response(request_json)
 
-    def contact_connection_request(self, contact_uuid: str) -> int:
+    def contact_connection_request(self, contact_uuid: str):
+        """Request to connect with a certain contact.
+
+        Parameters
+        ----------
+        contact_uuid : str
+            UUID of contact to connect with
+        """
         payload = {}
         payload['requestType'] = RequestType.CONNECT_WITH_CONTACT_REQUEST
         payload['contactUUID'] = contact_uuid
         json_data = json.dumps(payload)
-        return self._socket.send(json_data.encode())
-
-
-
+        self._socket.send(json_data.encode())
 
     def send_msg(self, contact_uuid: str, msg: str):
+        """Send encrypted message to specified contact.
+        
+        Parameters
+        ----------
+        contact_uuid : str
+            UUID of contact to connect with
+        msg: str
+            Plain text message to sent. Will be encrypted before it is sent out.
+        """
         # Get contact by UUID
         contact = next((contact for contact in self._contacts if str(contact.contact_uuid) == contact_uuid), None)
-
         self._cursor.execute("""
             INSERT INTO chat_history 
             VALUES (
@@ -311,12 +374,18 @@ class OQSClient():
 
     # Frontend exposed methods:
     def get_uuid(self):
+        """Helper message for the Eel frontent. Returns UUID
+        """
         return self.__uuid
 
     def get_name(self):
+        """Helper message for the Eel frontent. Returns Name
+        """
         return self._name
 
     def load_chat_overview(self):
+        """Helper message for the Eel frontent. Returns the chat overview
+        """
         overview_list = []
         rows = self._cursor.execute("SELECT c.uuid, c.name FROM contacts c").fetchall()
         for row in rows:
@@ -324,9 +393,20 @@ class OQSClient():
         return json.dumps(overview_list)
 
     def load_chat_history(self):
+        """Helper message for the Eel frontent. Returns the chat history
+        """
         history_list = []
         rows = self._cursor.execute("SELECT * FROM chat_history").fetchall()
         for row in rows:
             history_list.append(dict(row))
         return json.dumps(history_list)
+
+    def load_chat_history_list(self):
+        """Helper message for the integration test, for a better assertion
+        """
+        history_list = []
+        rows = self._cursor.execute("SELECT * FROM chat_history").fetchall()
+        for row in rows:
+            history_list.append(dict(row))
+        return history_list
 

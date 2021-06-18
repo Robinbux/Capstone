@@ -13,6 +13,7 @@ For a presentation video, please look [here](https://www.youtube.com/watch?v=jMY
 
 
 ## Setup
+The applicaiton uses [Eel](https://github.com/ChrisKnott/Eel), and with that HTML/CSS/JS for the visuals in the client and Python for the backend and client logic.
 For a manual reproduction, please install [liboqs-python](https://github.com/open-quantum-safe/liboqs-python) and the forked [openssl](https://github.com/open-quantum-safe/openssl). 
 
 Install a custom Python version (Needed for the openssl verification)
@@ -34,8 +35,7 @@ mkdir build && cd build && cmake -GNinja -DCMAKE_INSTALL_PREFIX=${OPENSSL_PATH}/
 Build liboqs-openssl
 ```shell
 cd ${OPENSSL_PATH}
-./Configure no-shared linux-x86_64 -lm
-./Configure --prefix=/Users/robinbux/quantum-new/openssl --openssldir=/Users/robinbux/quantum-new/openssl/ssl
+./Configure --prefix=${OPENSSL_PATH}l --openssldir=${OPENSSL_PATH}/ssl
 make -j -l
 ```
 
@@ -44,8 +44,14 @@ Build Python
 ./configure --with-openssl=${OPENSSL_PATH} --with-http_ssl_module
 ```
 
+There are some pip modules that need to be installed as well. Unfortunately, 
+the forked OpenSSL breaks pip, so those modules need to be installed manually. 
+For simplicities sake, I gathered the required packages [here](https://github.com/Robinbux/capstone-helper). 
+These need to be added manually to `{PYTHON_PATH}/Lib/python3.9/site-packages`.
+
 ### Create Certificates
-Create private and public CA certs
+You can either create new certificates with any algorithm provided by OpenQuantumSafe, or use the ones already created, in `src/pca`
+Create private and public CA certs.
 ```shell
 export SIG_ALG="dilithium5"
 mkdir ca && cd ca && ${OPENSSL_PATH}/apps/openssl req -x509 -new -newkey ${SIG_ALG} -keyout ${SIG_ALG}_CA.key \
@@ -70,7 +76,7 @@ keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment \
 subjectAltName = @alt_names \n\
 [alt_names] \n\
 DNS.1 = localhost \n\
-IP.1 = 127.0.0.1 ' > server/v3.ext
+IP.1 = 127.0.0.1 ' > ${EXT_FILE_PATH}
 ```
 Let the CA sign the request
 ```shell
