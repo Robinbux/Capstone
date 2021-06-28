@@ -135,7 +135,7 @@ class OQSServer():
     def __handle_new_account(self, request_json, client):
         """When a new client connects, create a unique UUID and Seed phrase for it.
         """
-        self._logger.info("RECEIVED NEW ACCOUNT")
+        self.__logger.info("RECEIVED NEW ACCOUNT")
         # Generate random UUID for client
         client_uuid = uuid.uuid4()
 
@@ -165,13 +165,13 @@ class OQSServer():
         })
         self.__connection.commit()
 
-        self._logger.info("---SENDING UUID AND SEED---")
+        self.__logger.info("---SENDING UUID AND SEED---")
         payload = {}
         payload['requestType'] = RequestType.ASSIGN_UUID_AND_SEED
         payload['UUID'] = str(client_uuid)
         payload['seedPhrase'] = seed_phrase
         payload['seedHash'] = base64.b64encode(seed_phrase_hash).decode('ascii')
-        self._logger.info(f"PAYLOAD: {payload}")
+        self.__logger.info(f"PAYLOAD: {payload}")
         json_data = json.dumps(payload)
         client.send(json_data.encode())
         return client_key_pair
@@ -212,18 +212,18 @@ class OQSServer():
         """
         contact = self.__db_client_with_uuid(contact_uuid)
         contact_exists = contact is not None
-        self._logger.info(f"Contact with UUID {contact_uuid} exists: {contact_exists}")
+        self.__logger.info(f"Contact with UUID {contact_uuid} exists: {contact_exists}")
 
         payload = {}
         payload['requestType'] = RequestType.CONNECT_WITH_CONTACT_RESPONSE
         payload['contactExists'] = contact_exists
         if contact_exists:
-            self._logger.info(f"CONTACT: {contact}")
+            self.__logger.info(f"CONTACT: {contact}")
             payload['contactUUID'] = contact_uuid
             payload['contactName'] = contact['name']
             # To send pub key, encode Bytes to ascii via Base64
             payload['contactPublicKey'] = base64.b64encode(contact['public_key']).decode('ascii')
-        self._logger.info(f"Payload: {payload}")
+        self.__logger.info(f"Payload: {payload}")
 
         json_data = json.dumps(payload)
 
@@ -241,7 +241,7 @@ class OQSServer():
         self.__logger.info(f"Starting server. Listening to max {num_connections} connections")
         self.__server.listen(num_connections)
 
-        self._logger.info("Waiting for connection...")
+        self.__logger.info("Waiting for connection...")
         thread = Thread(target=self.__accept_connections)
         thread.start()
         thread.join()
@@ -249,5 +249,5 @@ class OQSServer():
     def stop_server(self):
         """Stop the main loops
         """
-        self._logger.info("STOP SERVER")
+        self.__logger.info("STOP SERVER")
         self.keep_running = False
