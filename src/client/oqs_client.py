@@ -37,7 +37,7 @@ class OQSClient():
     to establish a communication.
     """
 
-    def __init__(self, eel, name: str, port: int = 33000, hostname='localhost', bufsize: int = 50000, test=False, other_db_path = None):
+    def __init__(self, eel, name: str, port: int = 33000, hostname='localhost', bufsize: int = 100000, test=False, other_db_path = None):
         self._eel = eel
         self._logger = logging.getLogger(__name__)
         self._logger.setLevel(logging.DEBUG)
@@ -160,6 +160,9 @@ class OQSClient():
         bytes
             Encrypted message
         """
+        origin_secret = secret
+        while len(msg) > len(secret):
+            secret = secret + origin_secret
         return bytes([_a ^ _b for _a, _b in zip(msg, secret)])
 
     def _handle_incoming_message(self, request_json):
